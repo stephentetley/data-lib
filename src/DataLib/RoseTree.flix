@@ -43,8 +43,8 @@ namespace DataLib {
 
 namespace DataLib/RoseTree {
 
-    use DataLib.{RoseTree, RoseForest};
-    use DataLib.RoseTree.{Node};
+    use DataLib.{RoseTree, RoseForest}
+    use DataLib.RoseTree.{Node}
 
     pub def singleton(x: a): RoseTree[a] = Node(x, Nil)
 
