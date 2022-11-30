@@ -17,11 +17,11 @@
 
 namespace DataLib {
     
-    type alias Collector[a: Type, c: Type, ans: Type] = 
-        { supplier      = Unit -> c
-        , accumulator   = a -> c -> c
-        , combiner      = c -> c -> c
-        , finisher      = c -> ans
+    type alias Collector[a: Type, ac: Type, ans: Type] = 
+        { supplier      = Unit -> ac
+        , accumulator   = a -> ac -> ac
+        , combiner      = ac -> ac -> ac
+        , finisher      = ac -> ans
         }
 }
 
@@ -29,6 +29,9 @@ namespace DataLib/Collector {
 
     use DataLib.Collector
 
+    /// TODO - alternatively can we provide all / most of Java's Collectors using Foldable
+
+    /// Foldable.sum
     pub def counting(): Collector[a, Int64, Int64] = 
         { supplier      = _ -> 0i64
         , accumulator   = (_, y) -> y + 1i64
@@ -36,6 +39,7 @@ namespace DataLib/Collector {
         , finisher      = x -> x
         }
 
+    /// Foldable.toList
     pub def toList(): Collector[a, List[a], List[a]] = 
         { supplier      = _ -> Nil
         , accumulator   = (x, xs) -> x :: xs
@@ -43,6 +47,7 @@ namespace DataLib/Collector {
         , finisher      = xs -> xs
         }
 
+    /// Foldable.toSet
     pub def toSet(): Collector[a, Set[a], Set[a]] with Order[a] = 
         { supplier      = _ -> Set.empty()
         , accumulator   = (x, s) -> Set.insert(x, s)
