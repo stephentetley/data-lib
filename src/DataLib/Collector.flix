@@ -17,51 +17,25 @@
 
 namespace DataLib {
     
-    type alias Collector[a: Type, ac: Type, ans: Type] = 
-        { supplier      = Unit -> ac
-        , accumulator   = a -> ac -> ac
-        , combiner      = ac -> ac -> ac
-        , finisher      = ac -> ans
+    type alias Collector[a: Type, acc: Type, ans: Type, ef: Bool] = 
+        { supplier      = Unit -> acc \ ef
+        , accumulator   = a -> acc -> acc \ ef
+        , finisher      = acc -> ans \ ef
         }
+
 }
 
 namespace DataLib/Collector {
 
     use DataLib.Collector
 
-    /// TODO - alternatively can we provide all / most of Java's Collectors using Foldable
 
-    /// Foldable.sum
-    pub def counting(): Collector[a, Int64, Int64] = 
-        { supplier      = _ -> 0i64
-        , accumulator   = (_, y) -> y + 1i64
-        , combiner      = (x, y) -> x + y
-        , finisher      = x -> x
-        }
+    pub def collect(c: Collector[a, acc, ans, ef], t: t[a]): ans \ ef with Foldable[t] = 
+        let st = (c.supplier)() as \ ef; 
+        ((Foldable.foldLeft(flip(c.accumulator), st, t) as \ ef)|> c.finisher) as \ ef
 
-    /// Foldable.toList
-    pub def toList(): Collector[a, List[a], List[a]] = 
-        { supplier      = _ -> Nil
-        , accumulator   = (x, xs) -> x :: xs
-        , combiner      = (xs, ys) -> xs ::: ys
-        , finisher      = xs -> xs
-        }
 
-    /// Foldable.toSet
-    pub def toSet(): Collector[a, Set[a], Set[a]] with Order[a] = 
-        { supplier      = _ -> Set.empty()
-        , accumulator   = (x, s) -> Set.insert(x, s)
-        , combiner      = (s1, s2) -> Set.union(s1, s2)
-        , finisher      = s -> s
-        }
 
-    pub def listcollect(c: Collector[a, c, ans], l: List[a]): ans = 
-        def loop(ac, xs) = match xs {
-            case Nil     => let f = c.finisher; f(ac)
-            case x :: rs => let f = c.accumulator; let ac1 = f(x, ac); loop(ac1, rs)
-        };
-        let f = c.supplier;
-        loop(f(), l)
     
 
 }

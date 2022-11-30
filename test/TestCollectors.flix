@@ -18,7 +18,7 @@
 
 namespace TestCollectors {
 
-    use DataLib/Collectors.collect;
+    use DataLib/Collector.collect;
 
     /////////////////////////////////////////////////////////////////////////////
     // averagingInt32                                                          //
