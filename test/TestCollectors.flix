@@ -43,4 +43,17 @@ namespace TestCollectors {
         let ans = collect(c1, l);
         ans == 2.5f64
 
+    /////////////////////////////////////////////////////////////////////////////
+    // groupingBy                                                              //
+    /////////////////////////////////////////////////////////////////////////////
+
+    @test
+    def groupingBy01(): Bool =
+        use DataLib/Collectors.groupingBy;
+        let l = 1 :: 2 :: 3 :: 4 :: 5 :: 6 :: 7 :: 8 :: 9 :: 10 :: Nil;
+        let c1 = groupingBy(i -> if (i mod 2 == 0) "even" else "odd");
+        let ans = collect(c1, l);
+        ans == List.toMap(("even", 10 :: 8 :: 6 :: 4 :: 2 :: Nil) :: ("odd", 9 :: 7 :: 5 :: 3 :: 1 :: Nil) :: Nil)
+
+
 }

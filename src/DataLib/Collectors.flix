@@ -44,10 +44,19 @@ namespace DataLib/Collectors {
 
     /// `filtering` is a "collector transformer" it is not possible to implement if we don't have a tangible collector
     pub def filtering(f: a -> Bool \ ef1, c: Collector[a, acc, ans, ef]): Collector[a, acc, ans, ef and ef1] = 
-        let accum1 = (a, acc) -> if (f(a)) (c.accumulator)(a, acc) else acc;
-        { supplier = _ -> (c.supplier)() as \ {ef, ef1} 
-        , accumulator = accum1
-        , finisher = acc -> (c.finisher)(acc) as \ {ef, ef1}
+        let accum1      = (a, acc) -> if (f(a)) (c.accumulator)(a, acc) else acc;
+        { supplier      = () -> (c.supplier)() as \ {ef, ef1} 
+        , accumulator   = accum1
+        , finisher      = acc -> (c.finisher)(acc) as \ {ef, ef1}
+        }
+
+
+    /// `andThen` is a "collector transformer" 
+    pub def andThen(f: ans -> ans1 \ ef1, c: Collector[a, acc, ans, ef]): Collector[a, acc, ans1, ef and ef1] = 
+        let finish1     = ans -> {let g = c.finisher; g(ans) |> f};
+        { supplier      = () -> (c.supplier)() as \ {ef, ef1} 
+        , accumulator   = (a, acc) -> (c.accumulator)(a, acc) as \ {ef, ef1}
+        , finisher      = finish1
         }
 
     /// Foldable.sum
@@ -71,5 +80,10 @@ namespace DataLib/Collectors {
         , finisher      = s -> s
         }
 
+    pub def groupingBy(f: a -> k \ ef): Collector[a, Map[k, List[a]], Map[k, List[a]], ef] with Order[k] = 
+        { supplier      = () -> Map.empty() as \ ef
+        , accumulator   = (a, acc) -> {let k = f(a); Map.insertWith((l1, l2) -> l1 ::: l2, k, a :: Nil, acc)}
+        , finisher      = m -> m as \ ef
+        }
 
 }
