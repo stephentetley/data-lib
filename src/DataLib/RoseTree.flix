@@ -26,16 +26,16 @@ namespace DataLib {
     }
 
     instance Functor[RoseTree] {
-        pub def map(f: a -> b & ef, t: RoseTree[a]): RoseTree[b] & ef = DataLib/RoseTree.map(f, t)
+        pub def map(f: a -> b \ ef, t: RoseTree[a]): RoseTree[b] \ ef = DataLib/RoseTree.map(f, t)
     }
 
     instance Applicative[RoseTree] {
         pub def point(x: a): RoseTree[a] = DataLib/RoseTree.singleton(x)
-        pub def ap(f: RoseTree[a -> b & ef], x: RoseTree[a]): RoseTree[b] & ef = DataLib/RoseTree.ap(f, x)
+        pub def ap(f: RoseTree[a -> b \ ef], x: RoseTree[a]): RoseTree[b] \ ef = DataLib/RoseTree.ap(f, x)
     }
 
     instance Monad[RoseTree] {
-        pub def flatMap(f: a -> RoseTree[b] & ef, x: RoseTree[a]): RoseTree[b] & ef = DataLib/RoseTree.flatMap(f, x)
+        pub def flatMap(f: a -> RoseTree[b] \ ef, x: RoseTree[a]): RoseTree[b] \ ef = DataLib/RoseTree.flatMap(f, x)
     }
 
     pub type alias RoseForest[a] = List[RoseTree[a]]
@@ -62,27 +62,27 @@ namespace DataLib/RoseTree {
         }
 
     /// TODO - for the time being keep this for testing/comparing the CPS version.
-    pub def apSimple(f: RoseTree[a -> b & ef], t: RoseTree[a]): RoseTree[b] & ef =
+    pub def apSimple(f: RoseTree[a -> b \ ef], t: RoseTree[a]): RoseTree[b] \ ef =
         let Node(f1, fs) = f;
         let Node(x1, ts) = t;
         Node(f1(x1), List.map(Functor.map(f1), ts) ::: List.map(flip(ap, t), fs))
 
-    pub def ap(f: RoseTree[a -> b & ef], t: RoseTree[a]): RoseTree[b] & ef =
-        apHelper(f, t, kt -> kt as & ef)
+    pub def ap(f: RoseTree[a -> b \ ef], t: RoseTree[a]): RoseTree[b] \ ef =
+        apHelper(f, t, kt -> unsafe_cast kt as \ ef)
 
-    def apHelper(f: RoseTree[a -> b & ef], t: RoseTree[a], k: RoseTree[b] -> RoseTree[b] & ef): RoseTree[b] & ef =
+    def apHelper(f: RoseTree[a -> b \ ef], t: RoseTree[a], k: RoseTree[b] -> RoseTree[b] \ ef): RoseTree[b] \ ef =
         let Node(f1, fs) = f;
         let Node(x1, ts) = t;
         apHelperList1(f1, ts, ks1 ->
             apHelperList2(t, fs, ks2 -> k(Node(f1(x1), ks1 ::: ks2))))
 
-    def apHelperList1(f1: a -> b & ef, ts: List[RoseTree[a]], k: List[RoseTree[b]] -> RoseTree[b] & ef): RoseTree[b] & ef =
+    def apHelperList1(f1: a -> b \ ef, ts: List[RoseTree[a]], k: List[RoseTree[b]] -> RoseTree[b] \ ef): RoseTree[b] \ ef =
         match ts {
             case Nil => k(Nil)
             case t1 :: rs => apHelperList1(f1, rs, ks -> k(map(f1, t1) :: ks))
         }
 
-    def apHelperList2(t: RoseTree[a], fs: List[RoseTree[a -> b & ef]], k: List[RoseTree[b]] -> RoseTree[b] & ef): RoseTree[b] & ef =
+    def apHelperList2(t: RoseTree[a], fs: List[RoseTree[a -> b \ ef]], k: List[RoseTree[b]] -> RoseTree[b] \ ef): RoseTree[b] \ ef =
         match fs {
             case Nil => k(Nil)
             case f1 :: rs => apHelperList2(t, rs, ks ->
@@ -91,22 +91,22 @@ namespace DataLib/RoseTree {
         }
 
     /// TODO - for the time being keep this for testing/comparing the CPS version.
-    pub def bindSimple(t: RoseTree[a], f: a -> RoseTree[b] & ef): RoseTree[b] & ef =
+    pub def bindSimple(t: RoseTree[a], f: a -> RoseTree[b] \ ef): RoseTree[b] \ ef =
         let Node(x1, ts) = t;
         match f(x1) {
             case Node(x2, ts2) => Node(x2, ts2 ::: List.map(flip(bind, f), ts))
         }
 
-    pub def bind(t: RoseTree[a], f: a -> RoseTree[b] & ef): RoseTree[b] & ef =
-        bindHelper(t, f, kt -> kt as & ef)
+    pub def bind(t: RoseTree[a], f: a -> RoseTree[b] \ ef): RoseTree[b] \ ef =
+        bindHelper(t, f, kt -> unsafe_cast kt as \ ef)
 
-    def bindHelper(t: RoseTree[a], f: a -> RoseTree[b] & ef, k: RoseTree[b] -> RoseTree[b] & ef): RoseTree[b] & ef =
+    def bindHelper(t: RoseTree[a], f: a -> RoseTree[b] \ ef, k: RoseTree[b] -> RoseTree[b] \ ef): RoseTree[b] \ ef =
         let Node(x1, ts) = t;
         match f(x1) {
             case Node(x2, ts2) => bindHelperList(ts, f, ks -> k(Node(x2, ts2 ::: ks)))
         }
 
-    def bindHelperList(l: List[RoseTree[a]], f: a -> RoseTree[b] & ef, k: List[RoseTree[b]] -> RoseTree[b] & ef): RoseTree[b] & ef =
+    def bindHelperList(l: List[RoseTree[a]], f: a -> RoseTree[b] \ ef, k: List[RoseTree[b]] -> RoseTree[b] \ ef): RoseTree[b] \ ef =
         match l {
             case Nil => k(Nil)
             case t1 :: rs => bindHelper(t1, f, k1 ->
@@ -114,7 +114,7 @@ namespace DataLib/RoseTree {
                                     k(k1 :: ks)))
         }
 
-    pub def flatMap(f: a -> RoseTree[b] & ef, t: RoseTree[a]) : RoseTree[b] & ef = bind(t, f)
+    pub def flatMap(f: a -> RoseTree[b] \ ef, t: RoseTree[a]) : RoseTree[b] \ ef = bind(t, f)
 
     pub def drawTree(x: RoseTree[String]): String = drawTree1(x, xs -> xs) |> String.unlines
 
@@ -207,39 +207,39 @@ namespace DataLib/RoseTree {
         case x :: rs => foldRoseTreeHelper(f, x, v -> foldRoseForest(f, rs, vs -> k(v :: vs)))
     }
 
-    pub def map(f: a -> b & ef, t: RoseTree[a]): RoseTree[b] & ef =
-        mapHelper(f, t, k -> k as & ef)
+    pub def map(f: a -> b \ ef, t: RoseTree[a]): RoseTree[b] \ ef =
+        mapHelper(f, t, k -> unsafe_cast k as \ ef)
 
-    def mapHelper(f: a -> b & ef, t: RoseTree[a], k: RoseTree[b] -> RoseTree[b] & ef): RoseTree[b] & ef = match t {
+    def mapHelper(f: a -> b \ ef, t: RoseTree[a], k: RoseTree[b] -> RoseTree[b] \ ef): RoseTree[b] \ ef = match t {
         case Node(a,xs) => mapForest(f, xs, vs -> k(Node(f(a), vs)))
     }
 
-    def mapForest(f: a -> b & ef, ts: RoseForest[a], k: RoseForest[b] -> RoseTree[b] & ef): RoseTree[b] & ef = match ts {
+    def mapForest(f: a -> b \ ef, ts: RoseForest[a], k: RoseForest[b] -> RoseTree[b] \ ef): RoseTree[b] \ ef = match ts {
         case Nil     => k(Nil)
         case x :: rs => mapHelper(f, x, v1 -> mapForest(f, rs, vs -> k(v1 :: vs)))
     }
 
     /// Traversal order is preorder (check...)
-    pub def foreach(f: a -> Unit & ef, t: RoseTree[a]): Unit & ef =
+    pub def foreach(f: a -> Unit \ ef, t: RoseTree[a]): Unit \ ef =
         let Node(a,xs) = t;
         f(a);
         foreachForest(f, xs)
 
-    def foreachForest(f: a -> Unit & ef, ts: RoseForest[a]): Unit & ef = match ts {
+    def foreachForest(f: a -> Unit \ ef, ts: RoseForest[a]): Unit \ ef = match ts {
         case Nil => ()
         case x :: rs => { foreach(f, x); foreachForest(f, rs) }
     }
 
-    pub def unfoldTree(f: b -> (a, List[b]) & ef, st: b): RoseTree[a] & ef=
-        unfoldTreeHelper(f, st, k -> k as & ef)
+    pub def unfoldTree(f: b -> (a, List[b]) \ ef, st: b): RoseTree[a] \ ef=
+        unfoldTreeHelper(f, st, k -> unsafe_cast k as \ ef)
 
     /// CPS
-    def unfoldTreeHelper(f: b -> (a, List[b]) & ef, st: b, k: RoseTree[a] -> RoseTree[a] & ef): RoseTree[a] & ef =
+    def unfoldTreeHelper(f: b -> (a, List[b]) \ ef, st: b, k: RoseTree[a] -> RoseTree[a] \ ef): RoseTree[a] \ ef =
         let (a, bs) = f(st);
         unfoldTreeListHelper(f, bs, ks -> k(Node(a, ks)))
 
     /// CPS
-    def unfoldTreeListHelper(f: b -> (a, List[b]) & ef, ss: List[b], k: RoseForest[a] -> RoseTree[a] & ef): RoseTree[a] & ef =
+    def unfoldTreeListHelper(f: b -> (a, List[b]) \ ef, ss: List[b], k: RoseForest[a] -> RoseTree[a] \ ef): RoseTree[a] \ ef =
         match ss {
             case Nil => k(Nil)
             case s :: rs => unfoldTreeHelper(f, s, k1 ->
@@ -247,20 +247,20 @@ namespace DataLib/RoseTree {
         }
 
 
-    pub def unfoldForest(f: b -> (a, List[b]) & ef, ss: List[b]): RoseForest[a] & ef =
+    pub def unfoldForest(f: b -> (a, List[b]) \ ef, ss: List[b]): RoseForest[a] \ ef =
         List.map(unfoldTree(f), ss)
 
 
     pub def sequence(t: RoseTree[m[a]]): m[RoseTree[a]] with Applicative[m] =
         traverse(identity, t)
 
-    pub def traverse(f: a -> m[b] & ef, t: RoseTree[a]): m[RoseTree[b]] & ef with Applicative[m] =
-        traverseTree(f, t, k -> k as & ef)
+    pub def traverse(f: a -> m[b] \ ef, t: RoseTree[a]): m[RoseTree[b]] \ ef with Applicative[m] =
+        traverseTree(f, t, k -> unsafe_cast k as \ ef)
 
 
     /// TODO check the cps transform...
     /// Particulary, is `f(x)` performed at the right time.
-    def traverseTree(f: a -> m[b] & ef, t: RoseTree[a], k: m[RoseTree[b]] -> m[RoseTree[b]] & ef): m[RoseTree[b]] & ef with Applicative[m] =
+    def traverseTree(f: a -> m[b] \ ef, t: RoseTree[a], k: m[RoseTree[b]] -> m[RoseTree[b]] \ ef): m[RoseTree[b]] \ ef with Applicative[m] =
         match t {
             case Node(x, xs) => traverseForest(f, xs, ks -> k(nodeA(f(x), ks)))
         }
@@ -273,7 +273,7 @@ namespace DataLib/RoseTree {
         (((x, xs) -> x :: xs) `Functor.map` mx) `Applicative.ap` mxs
 
     /// TODO check the cps transform...
-    def traverseForest(f: a -> m[b] & ef, l: RoseForest[a], k: m[RoseForest[b]] -> m[RoseTree[b]] & ef): m[RoseTree[b]] & ef with Applicative[m] =
+    def traverseForest(f: a -> m[b] \ ef, l: RoseForest[a], k: m[RoseForest[b]] -> m[RoseTree[b]] \ ef): m[RoseTree[b]] \ ef with Applicative[m] =
         match l {
             case Nil => k(Applicative.point(Nil))
             case x :: rs => traverseTree(f, x, k1 ->

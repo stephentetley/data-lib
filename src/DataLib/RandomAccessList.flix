@@ -47,7 +47,7 @@ namespace DataLib/RandomAccessList {
         l1
 
     instance Functor[Tree] {
-        pub def map(f: a -> b & ef, t: Tree[a]): Tree[b] & ef = 
+        pub def map(f: a -> b \ ef, t: Tree[a]): Tree[b] \ ef = 
             def loop(tree, k) = match tree {
                 case Leaf(a)         => {let ans = Leaf(f(a)); k(ans)}
                 case Node(a, t1, t2) => {
@@ -57,11 +57,11 @@ namespace DataLib/RandomAccessList {
                             k(Node(b, v1, v2))))
                 }
             };
-            loop(t, k -> k as & ef)
+            loop(t, k -> unsafe_cast k as \ ef)
     }
 
     instance Functor[RandomAccessList] {
-        pub def map(f: a -> b & ef, l: RandomAccessList[a]): RandomAccessList[b] & ef = 
+        pub def map(f: a -> b \ ef, l: RandomAccessList[a]): RandomAccessList[b] \ ef = 
             let RandomAccessList(l1) = l;
             Functor.map(x -> {let (i, t) = x; (i, Functor.map(f, t))}, l1) |> RandomAccessList
     }
@@ -187,7 +187,7 @@ namespace DataLib/RandomAccessList {
         let RandomAccessList(l1) = l;
         loop(0, l1)
 
-    pub def foldLeft(f: (b, a) -> b & ef, s: b, l: RandomAccessList[a]): b & ef =
+    pub def foldLeft(f: (b, a) -> b \ ef, s: b, l: RandomAccessList[a]): b \ ef =
         def loop(s1, xs) = match fastView(xs) {
             case FastEmpty       => s1
             case FastCons(x, rs) => loop(f(s1, x), rs)
@@ -195,30 +195,30 @@ namespace DataLib/RandomAccessList {
         let RandomAccessList(l1) = l;
         loop(s, l1)
 
-    pub def foldRight(f: (a, b) -> b & ef, s: b, l: RandomAccessList[a]): b & ef =
+    pub def foldRight(f: (a, b) -> b \ ef, s: b, l: RandomAccessList[a]): b \ ef =
         def loop(xs, k) = match fastView(xs) {
             case FastEmpty       => k(s)
             case FastCons(x, rs) => loop(rs, ka -> k(f(x, ka)))
         };
         let RandomAccessList(l1) = l;
-        loop(l1, ka -> ka as & ef)
+        loop(l1, ka -> unsafe_cast ka as \ ef)
 
-    pub def filter(f: a -> Bool & ef, l: RandomAccessList[a]): RandomAccessList[a] & ef =
+    pub def filter(f: a -> Bool \ ef, l: RandomAccessList[a]): RandomAccessList[a] \ ef =
         let step = (x, acc) -> if (f(x)) cons(x, acc) else acc;
         foldRight(step, empty(), l)
     
-    pub def filterMap(f: a -> Option[b] & ef, l: RandomAccessList[a]): RandomAccessList[b] & ef =
+    pub def filterMap(f: a -> Option[b] \ ef, l: RandomAccessList[a]): RandomAccessList[b] \ ef =
         let step = (x, acc) -> match f(x) {
             case None    => acc
             case Some(b) => cons(b, acc)
         };
         foldRight(step, empty(), l)
 
-    pub def map(f: a -> b & ef, l: RandomAccessList[a]): RandomAccessList[b] & ef = 
+    pub def map(f: a -> b \ ef, l: RandomAccessList[a]): RandomAccessList[b] \ ef = 
         let RandomAccessList(l1) = l;
         List.map(xy -> let (w, t) = xy; (w, mapTree(f, t)), l1) |> RandomAccessList
 
-    def mapTree(f: a -> b & ef, t: Tree[a]): Tree[b] & ef = 
+    def mapTree(f: a -> b \ ef, t: Tree[a]): Tree[b] \ ef = 
         def loop(tree, k) = match tree {
             case Leaf(a)         => {let ans = Leaf(f(a)); k(ans)}
             case Node(a, t1, t2) => {
@@ -228,10 +228,10 @@ namespace DataLib/RandomAccessList {
                         k(Node(b, v1, v2))))
             }
         };
-        loop(t, k -> k as & ef)
+        loop(t, k -> unsafe_cast k as \ ef)
 
 
-    pub def ap(f: RandomAccessList[a -> b & ef], x: RandomAccessList[a]) : RandomAccessList[b] & ef =
+    pub def ap(f: RandomAccessList[a -> b \ ef], x: RandomAccessList[a]) : RandomAccessList[b] \ ef =
         def loop(g, acc) = match g {
             case FastEmpty       => acc
             case FastCons(h, xs) => loop(fastView(xs), acc `append` map(h, x))
@@ -239,7 +239,7 @@ namespace DataLib/RandomAccessList {
         let RandomAccessList(f1) = f;
         loop(fastView(f1), empty())
 
-    pub def flatMap(f: a -> RandomAccessList[b] & ef, l: RandomAccessList[a]): RandomAccessList[b] & ef =
+    pub def flatMap(f: a -> RandomAccessList[b] \ ef, l: RandomAccessList[a]): RandomAccessList[b] \ ef =
         def loop(body, acc) = match fastView(body) {
             case FastEmpty       => acc
             case FastCons(a, rs) => loop(rs, append(acc, f(a)))
