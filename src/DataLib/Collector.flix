@@ -31,8 +31,8 @@ namespace DataLib/Collector {
 
 
     pub def collect(c: Collector[a, acc, ans, ef], t: t[a]): ans \ ef with Foldable[t] = 
-        let st = unsafe_cast ((c.supplier)()) as \ ef; 
-        unsafe_cast ((unsafe_cast Foldable.foldLeft(flip(c.accumulator), st, t) as \ ef)|> c.finisher) as \ ef
+        let st = unsafe_cast ((c.supplier)()) as _ \ ef; 
+        unsafe_cast ((unsafe_cast Foldable.foldLeft(flip(c.accumulator), st, t) as _ \ ef)|> c.finisher) as _ \ ef
 
 
 
