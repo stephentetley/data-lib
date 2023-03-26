@@ -17,6 +17,9 @@
 
 namespace DataLib {
 
+    use DataLib.RoseTree
+    use DataLib.RoseTree.{Node}
+
     pub enum RoseTree[a] {
         case Node(a, List[RoseTree[a]])
     }
@@ -68,7 +71,7 @@ namespace DataLib/RoseTree {
         Node(f1(x1), List.map(Functor.map(f1), ts) ::: List.map(flip(ap, t), fs))
 
     pub def ap(f: RoseTree[a -> b \ ef], t: RoseTree[a]): RoseTree[b] \ ef =
-        apHelper(f, t, kt -> unsafe_cast kt as _ \ ef)
+        apHelper(f, t, identity)
 
     def apHelper(f: RoseTree[a -> b \ ef], t: RoseTree[a], k: RoseTree[b] -> RoseTree[b] \ ef): RoseTree[b] \ ef =
         let Node(f1, fs) = f;
@@ -98,7 +101,7 @@ namespace DataLib/RoseTree {
         }
 
     pub def bind(t: RoseTree[a], f: a -> RoseTree[b] \ ef): RoseTree[b] \ ef =
-        bindHelper(t, f, kt -> unsafe_cast kt as _ \ ef)
+        bindHelper(t, f, identity)
 
     def bindHelper(t: RoseTree[a], f: a -> RoseTree[b] \ ef, k: RoseTree[b] -> RoseTree[b] \ ef): RoseTree[b] \ ef =
         let Node(x1, ts) = t;
@@ -208,7 +211,7 @@ namespace DataLib/RoseTree {
     }
 
     pub def map(f: a -> b \ ef, t: RoseTree[a]): RoseTree[b] \ ef =
-        mapHelper(f, t, k -> unsafe_cast k as _ \ ef)
+        mapHelper(f, t, identity)
 
     def mapHelper(f: a -> b \ ef, t: RoseTree[a], k: RoseTree[b] -> RoseTree[b] \ ef): RoseTree[b] \ ef = match t {
         case Node(a,xs) => mapForest(f, xs, vs -> k(Node(f(a), vs)))
@@ -231,7 +234,7 @@ namespace DataLib/RoseTree {
     }
 
     pub def unfoldTree(f: b -> (a, List[b]) \ ef, st: b): RoseTree[a] \ ef=
-        unfoldTreeHelper(f, st, k -> unsafe_cast k as _ \ ef)
+        unfoldTreeHelper(f, st,identity)
 
     /// CPS
     def unfoldTreeHelper(f: b -> (a, List[b]) \ ef, st: b, k: RoseTree[a] -> RoseTree[a] \ ef): RoseTree[a] \ ef =
@@ -255,7 +258,7 @@ namespace DataLib/RoseTree {
         traverse(identity, t)
 
     pub def traverse(f: a -> m[b] \ ef, t: RoseTree[a]): m[RoseTree[b]] \ ef with Applicative[m] =
-        traverseTree(f, t, k -> unsafe_cast k as _ \ ef)
+        traverseTree(f, t, identity)
 
 
     /// TODO check the cps transform...

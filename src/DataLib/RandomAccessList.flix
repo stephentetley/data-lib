@@ -22,6 +22,15 @@
 
 namespace DataLib/RandomAccessList {
 
+    use DataLib/RandomAccessList.RandomAccessList
+    use DataLib/RandomAccessList.RandomAccessList.{RandomAccessList}
+    use DataLib/RandomAccessList.Tree
+    use DataLib/RandomAccessList.Tree.{Leaf, Node}
+    use DataLib/RandomAccessList.View
+    use DataLib/RandomAccessList.View.{RAEmpty, RACons}
+    use DataLib/RandomAccessList.FastView
+    use DataLib/RandomAccessList.FastView.{FastEmpty, FastCons}
+
     enum Tree[a] with Eq, Order, ToString {
         case Leaf(a)
         case Node(a, Tree[a], Tree[a])
@@ -57,7 +66,7 @@ namespace DataLib/RandomAccessList {
                             k(Node(b, v1, v2))))
                 }
             };
-            loop(t, k -> unsafe_cast k as _ \ ef)
+            loop(t, identity)
     }
 
     instance Functor[RandomAccessList] {
@@ -201,7 +210,7 @@ namespace DataLib/RandomAccessList {
             case FastCons(x, rs) => loop(rs, ka -> k(f(x, ka)))
         };
         let RandomAccessList(l1) = l;
-        loop(l1, ka -> unsafe_cast ka as _ \ ef)
+        loop(l1, identity)
 
     pub def filter(f: a -> Bool \ ef, l: RandomAccessList[a]): RandomAccessList[a] \ ef =
         let step = (x, acc) -> if (f(x)) cons(x, acc) else acc;
@@ -228,7 +237,7 @@ namespace DataLib/RandomAccessList {
                         k(Node(b, v1, v2))))
             }
         };
-        loop(t, k -> unsafe_cast k as _ \ ef)
+        loop(t, identity)
 
 
     pub def ap(f: RandomAccessList[a -> b \ ef], x: RandomAccessList[a]) : RandomAccessList[b] \ ef =
