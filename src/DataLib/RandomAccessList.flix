@@ -20,16 +20,16 @@
 ///
 
 
-namespace DataLib/RandomAccessList {
+mod DataLib.RandomAccessList {
 
-    use DataLib/RandomAccessList.RandomAccessList
-    use DataLib/RandomAccessList.RandomAccessList.{RandomAccessList}
-    use DataLib/RandomAccessList.Tree
-    use DataLib/RandomAccessList.Tree.{Leaf, Node}
-    use DataLib/RandomAccessList.View
-    use DataLib/RandomAccessList.View.{RAEmpty, RACons}
-    use DataLib/RandomAccessList.FastView
-    use DataLib/RandomAccessList.FastView.{FastEmpty, FastCons}
+    use DataLib.RandomAccessList.RandomAccessList
+    use DataLib.RandomAccessList.RandomAccessList.{RandomAccessList}
+    use DataLib.RandomAccessList.Tree
+    use DataLib.RandomAccessList.Tree.{Leaf, Node}
+    use DataLib.RandomAccessList.View
+    use DataLib.RandomAccessList.View.{RAEmpty, RACons}
+    use DataLib.RandomAccessList.FastView
+    use DataLib.RandomAccessList.FastView.{FastEmpty, FastCons}
 
     enum Tree[a] with Eq, Order, ToString {
         case Leaf(a)

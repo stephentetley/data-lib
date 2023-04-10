@@ -15,7 +15,7 @@
  */
 
 
-namespace DataLib {
+mod DataLib {
 
     use DataLib.RoseTree
     use DataLib.RoseTree.{Node}
@@ -25,26 +25,26 @@ namespace DataLib {
     }
 
     instance Eq[RoseTree[a]] with Eq[a] {
-        pub def eq(t1: RoseTree[a], t2: RoseTree[a]): Bool = DataLib/RoseTree.equals(t1, t2)
+        pub def eq(t1: RoseTree[a], t2: RoseTree[a]): Bool = DataLib.RoseTree.equals(t1, t2)
     }
 
     instance Functor[RoseTree] {
-        pub def map(f: a -> b \ ef, t: RoseTree[a]): RoseTree[b] \ ef = DataLib/RoseTree.map(f, t)
+        pub def map(f: a -> b \ ef, t: RoseTree[a]): RoseTree[b] \ ef = DataLib.RoseTree.map(f, t)
     }
 
     instance Applicative[RoseTree] {
-        pub def point(x: a): RoseTree[a] = DataLib/RoseTree.singleton(x)
-        pub def ap(f: RoseTree[a -> b \ ef], x: RoseTree[a]): RoseTree[b] \ ef = DataLib/RoseTree.ap(f, x)
+        pub def point(x: a): RoseTree[a] = DataLib.RoseTree.singleton(x)
+        pub def ap(f: RoseTree[a -> b \ ef], x: RoseTree[a]): RoseTree[b] \ ef = DataLib.RoseTree.ap(f, x)
     }
 
     instance Monad[RoseTree] {
-        pub def flatMap(f: a -> RoseTree[b] \ ef, x: RoseTree[a]): RoseTree[b] \ ef = DataLib/RoseTree.flatMap(f, x)
+        pub def flatMap(f: a -> RoseTree[b] \ ef, x: RoseTree[a]): RoseTree[b] \ ef = DataLib.RoseTree.flatMap(f, x)
     }
 
     pub type alias RoseForest[a] = List[RoseTree[a]]
 }
 
-namespace DataLib/RoseTree {
+mod DataLib.RoseTree {
 
     use DataLib.{RoseTree, RoseForest}
     use DataLib.RoseTree.{Node}
@@ -64,11 +64,6 @@ namespace DataLib/RoseTree {
             case _                   => false
         }
 
-    /// TODO - for the time being keep this for testing/comparing the CPS version.
-    pub def apSimple(f: RoseTree[a -> b \ ef], t: RoseTree[a]): RoseTree[b] \ ef =
-        let Node(f1, fs) = f;
-        let Node(x1, ts) = t;
-        Node(f1(x1), List.map(Functor.map(f1), ts) ::: List.map(flip(ap, t), fs))
 
     pub def ap(f: RoseTree[a -> b \ ef], t: RoseTree[a]): RoseTree[b] \ ef =
         apHelper(f, t, identity)
@@ -91,13 +86,6 @@ namespace DataLib/RoseTree {
             case f1 :: rs => apHelperList2(t, rs, ks ->
                                 apHelper(f1, t, k1 ->
                                     k(k1 :: ks)))
-        }
-
-    /// TODO - for the time being keep this for testing/comparing the CPS version.
-    pub def bindSimple(t: RoseTree[a], f: a -> RoseTree[b] \ ef): RoseTree[b] \ ef =
-        let Node(x1, ts) = t;
-        match f(x1) {
-            case Node(x2, ts2) => Node(x2, ts2 ::: List.map(flip(bind, f), ts))
         }
 
     pub def bind(t: RoseTree[a], f: a -> RoseTree[b] \ ef): RoseTree[b] \ ef =
@@ -154,7 +142,7 @@ namespace DataLib/RoseTree {
         match xs {
             case Nil       => k(Nil)
             case t1 :: Nil => drawTree1(t1, ac1 -> shift1("`- ", "   ", ac1, ac2 -> k("|" :: ac2)))
-            case t1 :: rs  =>  drawTree1(t1, ac1 -> shift1("+- ", "|  ", ac1, ac2 -> drawKids(rs, ac3 -> k("|" :: (ac2 ::: ac3)))))
+            case t1 :: rs  => drawTree1(t1, ac1 -> shift1("+- ", "|  ", ac1, ac2 -> drawKids(rs, ac3 -> k("|" :: (ac2 ::: ac3)))))
         }
 
 
@@ -278,7 +266,7 @@ namespace DataLib/RoseTree {
     /// TODO check the cps transform...
     def traverseForest(f: a -> m[b] \ ef, l: RoseForest[a], k: m[RoseForest[b]] -> m[RoseTree[b]] \ ef): m[RoseTree[b]] \ ef with Applicative[m] =
         match l {
-            case Nil => k(Applicative.point(Nil))
+            case Nil     => k(Applicative.point(Nil))
             case x :: rs => traverseTree(f, x, k1 ->
                                 traverseForest(f, rs, ks ->
                                     k(consA(k1, ks))))
